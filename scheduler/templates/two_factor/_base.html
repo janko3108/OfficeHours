@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Two-Factor Authentication{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    /* Custom styles for 2FA pages */
+    body {
+      background-color: #f9fafb;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #1e1e2f;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    footer {
+      text-align: center;
+      padding: 15px;
+      color: #777;
+      font-size: 0.9rem;
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <h1>{% block header %}Two-Factor Authentication{% endblock %}</h1>
+  </header>
+  <div class="container">
+    {% block content %}
+    <!-- Default content block. Override in child templates. -->
+    {% endblock %}
+  </div>
+  <footer>
+    &copy; {% now "Y" %} Office Hours App
+  </footer>
+</body>
+</html>

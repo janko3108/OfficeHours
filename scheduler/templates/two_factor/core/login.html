@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+  <div class="form-container">
+    <h2>Login</h2>
+    {% if wizard %}
+      {% if wizard.errors %}
+        <div class="error">
+          <p>Please correct the following errors:</p>
+          <ul>
+            {% for field, errors in wizard.form.errors.items %}
+              {% for error in errors %}
+                <li>{{ field }}: {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        {{ wizard.management_form }}
+        {{ wizard.form.as_p }}
+        <button type="submit" class="btn">
+          {% if wizard.steps.current == "0" %}
+            Next
+          {% else %}
+            Login
+          {% endif %}
+        </button>
+      </form>
+    {% else %}
+      <!-- Fallback if wizard is not provided -->
+      <p>Wizard context not available. Rendering default form:</p>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn">Login</button>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}

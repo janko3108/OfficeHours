@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="form-container">
+    <h2>Book an Office Hour</h2>
+    {% if error %}
+      <p class="error">{{ error }}</p>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="booking_time">Booking Time</label>
+        <!-- Use the prefilled value if provided -->
+        <input type="datetime-local" name="booking_time" id="booking_time" value="{{ prefill.booking_time }}" required>
+      </div>
+      <button type="submit" class="btn">Book</button>
+    </form>
+  </div>
+{% endblock %}

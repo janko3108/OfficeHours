@@ -1,0 +1,20 @@
+{% extends "two_factor/_base.html" %}
+{% block content %}
+<h2>Set Up Two-Factor Authentication</h2>
+<p>Scan the QR code below with your authenticator app and then enter the token provided.</p>
+
+<div class="qr-code">
+  <img src="{{ qr_url }}" alt="QR Code">
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="token">Enter Token:</label>
+    <input type="text" name="token" id="token" required>
+  </div>
+  <!-- Only two buttons: Back and Next (Cancel removed) -->
+  <button type="submit" name="back" value="back" class="btn">Back</button>
+  <button type="submit" name="next" value="next" class="btn">Next</button>
+</form>
+{% endblock %}

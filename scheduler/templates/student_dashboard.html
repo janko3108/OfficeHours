@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block content %}
+<h2>Weekly Office Hours Schedule</h2>
+<p>
+  Week of {{ week_days.0|date:"M d, Y" }} - {{ week_days|last|date:"M d, Y" }}
+</p>
+
+
+
+<table class="schedule-table">
+  <thead>
+    <tr>
+      <th>Time</th>
+      {% for day in week_days %}
+      <th>{{ day|date:"D M d" }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for slot in time_slots %}
+    <tr>
+      <td>
+        {{ slot|date:"H:i" }} - {{ slot|add_hours:1|date:"H:i" }}
+      </td>
+      {% for day in week_days %}
+      {% with key=day|combine_key:slot.hour %}
+      <td>
+        {% if bookings_dict|get_item:key %}
+        {% with booking=bookings_dict|get_item:key %}
+        Booked by {{ booking.student.username }}
+        {% endwith %}
+        {% else %}
+        <p>Available</p>
+        <a href="{% url 'book_office_hour' %}?day={{ day|date:'Y-m-d' }}&hour={{ slot.hour }}" class="btn-book">Book</a>
+        {% endif %}
+      </td>
+      {% endwith %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="week-navigation">
+  <a href="?week={{ week_offset|add:" -1" }}" class="btn">Previous Week</a>
+  <a href="?week=0" class="btn">Current Week</a>
+  <a href="?week={{ week_offset|add:" 1" }}" class="btn">Next Week</a>
+</div>
+{% endblock %}
