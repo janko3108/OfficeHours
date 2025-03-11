@@ -1,0 +1,20 @@
+<header class="app-header">
+  <div class="header-container">
+    <div class="brand">
+      <a routerLink="/">Office Scheduler</a>
+    </div>
+    <nav class="nav-links">
+      <a routerLink="/dashboard">Dashboard</a>
+      <a routerLink="/login">Login</a>
+      <a routerLink="/register">Register</a>
+    </nav>
+    <button class="hamburger" (click)="toggleMenu()">
+      <span [class.open]="menuOpen">&#9776;</span>
+    </button>
+  </div>
+  <div class="mobile-menu" [class.show]="menuOpen">
+    <a routerLink="/dashboard" (click)="toggleMenu()">Dashboard</a>
+    <a routerLink="/login" (click)="toggleMenu()">Login</a>
+    <a routerLink="/register" (click)="toggleMenu()">Register</a>
+  </div>
+</header>

@@ -1,7 +1,7 @@
 from django.contrib import admin 
 from django.urls import path, include
 from django.shortcuts import redirect
-from scheduler import views as scheduler_views
+from api import views as scheduler_views
 from two_factor import urls as two_factor_urls_module
 
 urlpatterns = [
@@ -21,5 +21,5 @@ urlpatterns = [
     
     # Home view and your app's URLs:
     path('', scheduler_views.home, name='home'),
-    path('', include('scheduler.urls')),
+    path('', include('api.urls')),
 ]

@@ -14,12 +14,10 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Static files configuration for Angular consumption (if needed)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "scheduler/static"]
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+STATICFILES_DIRS = [BASE_DIR / "api" / "static"]
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-9x)uw$x+__!^d25lum(0yji(c5)_*!f^k@ecfd1v$7f5)y9+r-'
@@ -27,8 +25,7 @@ SECRET_KEY = 'django-insecure-9x)uw$x+__!^d25lum(0yji(c5)_*!f^k@ecfd1v$7f5)y9+r-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = []  # Add 'localhost' and '127.0.0.1' if needed
 
 # Application definition
 
@@ -40,45 +37,43 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # Optional, but recommended: For multi-site support
+    
+    # Optional: For multi-site support
     'django.contrib.sites',
-
+    
     # Third-party apps
     'rest_framework',
     'rest_framework.authtoken',
-
-    # 2FA / OTP Apps
+    'corsheaders',  # Added for Angular CORS support
+    
+    # 2FA / OTP apps
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
-
-    # Your app
-    'scheduler',
+    
+    # Your app (renamed from scheduler to api)
+    'api',
 ]
 
-
-
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Must be at the top
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    'django.middleware.common.CommonMiddleware',  # After cors middleware
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django_otp.middleware.OTPMiddleware',  # This is essential!
+    'django_otp.middleware.OTPMiddleware',  # This is essential for 2FA!
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-
 
 ROOT_URLCONF = 'office_scheduler.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'scheduler' / 'templates'],
+        'DIRS': [BASE_DIR / 'api' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -103,18 +98,13 @@ REST_FRAMEWORK = {
     ],
 }
 
-
-
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
+# Database configuration: Using SQLite for development
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -134,7 +124,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -146,18 +135,29 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Site ID for multi-site support
 SITE_ID = 1
+
+# Two-factor authentication settings (Twilio SMS gateway example)
 TWO_FACTOR_SMS_GATEWAY = 'two_factor.gateways.twilio.gateway.Twilio'
-LOGIN_REDIRECT_URL = '/dashboard/'
 
+# Redirect URL after login
+LOGIN_REDIRECT_URL = 'http://localhost:4200/dashboard/'
 
+# CORS settings for Angular frontend
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:4200",
+]
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_COOKIE_SECURE = False
