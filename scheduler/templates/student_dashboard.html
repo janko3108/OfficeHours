@@ -1,49 +1,54 @@
 {% extends "base.html" %}
 {% load custom_filters %}
+{% block title %}Dashboard | Office Scheduler{% endblock %}
+
 {% block content %}
-<h2>Weekly Office Hours Schedule</h2>
-<p>
-  Week of {{ week_days.0|date:"M d, Y" }} - {{ week_days|last|date:"M d, Y" }}
-</p>
-
-
-
-<table class="schedule-table">
-  <thead>
-    <tr>
-      <th>Time</th>
-      {% for day in week_days %}
-      <th>{{ day|date:"D M d" }}</th>
-      {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% for slot in time_slots %}
-    <tr>
-      <td>
-        {{ slot|date:"H:i" }} - {{ slot|add_hours:1|date:"H:i" }}
-      </td>
-      {% for day in week_days %}
-      {% with key=day|combine_key:slot.hour %}
-      <td>
-        {% if bookings_dict|get_item:key %}
-        {% with booking=bookings_dict|get_item:key %}
-        Booked by {{ booking.student.username }}
-        {% endwith %}
-        {% else %}
-        <p>Available</p>
-        <a href="{% url 'book_office_hour' %}?day={{ day|date:'Y-m-d' }}&hour={{ slot.hour }}" class="btn-book">Book</a>
-        {% endif %}
-      </td>
-      {% endwith %}
-      {% endfor %}
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-<div class="week-navigation">
-  <a href="?week={{ week_offset|add:" -1" }}" class="btn">Previous Week</a>
-  <a href="?week=0" class="btn">Current Week</a>
-  <a href="?week={{ week_offset|add:" 1" }}" class="btn">Next Week</a>
+<div class="card shadow">
+  <div class="card-header bg-primary text-white">
+    Your Weekly Office Hours Schedule
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Time</th>
+            {% for day in week_days %}
+              <th class="text-center">{{ day|date:"D, M d" }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for slot in time_slots %}
+          <tr>
+            <td class="fw-bold">{{ slot|date:"H:i" }} - {{ slot|add_hours:1|date:"H:i" }}</td>
+            {% for day in week_days %}
+              {% with key=day|combine_key:slot.hour %}
+              <td class="text-center">
+                {% if bookings_dict|get_item:key %}
+                  {% with booking=bookings_dict|get_item:key %}
+                    {% if booking.student == user %}
+                      <span class="badge bg-success">Booked by You</span>
+                    {% else %}
+                      <span class="badge bg-danger">Booked</span>
+                    {% endif %}
+                  {% endwith %}
+                {% else %}
+                  <a href="{% url 'book_office_hour' %}?day={{ day|date:'Y-m-d' }}&hour={{ slot.hour }}" class="btn btn-sm btn-outline-primary">Book</a>
+                {% endif %}
+              </td>
+              {% endwith %}
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="d-flex justify-content-center mt-3">
+      <a href="?week={{ week_offset|add:"-1" }}" class="btn btn-outline-secondary me-2">Previous Week</a>
+      <a href="?week=0" class="btn btn-outline-primary me-2">Current Week</a>
+      <a href="?week={{ week_offset|add:"1" }}" class="btn btn-outline-secondary">Next Week</a>
+    </div>
+  </div>
 </div>
 {% endblock %}

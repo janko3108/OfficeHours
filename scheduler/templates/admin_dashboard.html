@@ -1,27 +1,37 @@
 {% extends "base.html" %}
+{% block title %}Admin Dashboard | Office Scheduler{% endblock %}
+
 {% block content %}
-<h2>Admin Dashboard</h2>
-<table class="admin-table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Student</th>
-      <th>Booking Time</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for booking in bookings %}
-      <tr>
-        <td>{{ booking.id }}</td>
-        <td>{{ booking.student.username }}</td>
-        <td>{{ booking.booking_time|date:"M d, Y H:i" }}</td>
-        <td>
-          <a href="{% url 'admin_edit_booking' booking.id %}" class="btn-small">Edit</a>
-          <a href="{% url 'admin_delete_booking' booking.id %}" class="btn-small btn-danger">Delete</a>
-        </td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="card shadow">
+  <div class="card-header bg-primary text-white">
+    Admin Dashboard
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Student</th>
+            <th>Booking Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+          <tr>
+            <td>{{ booking.id }}</td>
+            <td>{{ booking.student.username }}</td>
+            <td>{{ booking.booking_time|date:"M d, Y H:i" }}</td>
+            <td>
+              <a href="{% url 'admin_edit_booking' booking.id %}" class="btn btn-sm btn-warning me-1">Edit</a>
+              <a href="{% url 'admin_delete_booking' booking.id %}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

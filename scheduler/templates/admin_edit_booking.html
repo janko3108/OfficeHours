@@ -1,15 +1,23 @@
 {% extends "base.html" %}
+{% block title %}Edit Booking | Office Scheduler{% endblock %}
+
 {% block content %}
-<h2>Edit Booking</h2>
-{% if error %}
-  <p class="error">{{ error }}</p>
-{% endif %}
-<form method="post">
-  {% csrf_token %}
-  <div class="form-group">
-    <label for="booking_time">Booking Time</label>
-    <input type="datetime-local" name="booking_time" id="booking_time" value="{{ booking.booking_time|date:'Y-m-d\\TH:i' }}" required>
+<div class="card shadow mx-auto" style="max-width: 500px;">
+  <div class="card-header bg-warning text-white">
+    Edit Booking
   </div>
-  <button type="submit" class="btn">Save Changes</button>
-</form>
+  <div class="card-body">
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+         <label for="booking_time" class="form-label">Booking Time</label>
+         <input type="datetime-local" name="booking_time" id="booking_time" class="form-control" value="{{ booking.booking_time|date:'Y-m-d\\TH:i' }}" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+    </form>
+  </div>
+</div>
 {% endblock %}

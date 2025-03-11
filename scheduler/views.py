@@ -18,6 +18,8 @@ from django.contrib.auth.decorators import login_required
 from datetime import datetime, timedelta
 from django.shortcuts import render
 from .models import OfficeHour
+from django.utils import timezone  # Import timezone utilities
+
 
 
 # ========= DRF API VIEWS =========
@@ -100,31 +102,35 @@ def student_logout(request):
 
 @login_required
 def student_dashboard(request):
-    # Get week offset from GET parameter (default 0 for current week)
     try:
         week_offset = int(request.GET.get('week', 0))
     except ValueError:
         week_offset = 0
 
-    today = datetime.today()
-    # Calculate Monday of the current week and adjust by week_offset
-    start_of_week = (today - timedelta(days=today.weekday())) + timedelta(weeks=week_offset)
-    # Only include weekdays: Monday (0) to Friday (4)
+    # Use timezone-aware current time
+    now = timezone.localtime(timezone.now())
+    
+    # Calculate the start of the week (Monday) as a timezone-aware datetime at midnight
+    start_of_week = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(weeks=week_offset)
+    
+    # Define weekdays (Monday to Friday)
     week_days = [start_of_week + timedelta(days=i) for i in range(5)]
     
-    # Define time slots from 8:00 to 15:00 (8 slots: 8-9, 9-10, ..., 15-16)
-    time_slots = [start_of_week.replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=i) for i in range(8)]
+    # Define time slots starting at 8:00 AM for 8 hours
+    time_slots = [start_of_week.replace(hour=8) + timedelta(hours=i) for i in range(8)]
     
-    # Get all bookings for the week (for all users)
+    # Use the start of Monday and end at the start of Saturday (5 days later)
     start_datetime = start_of_week
-    # End at the end of Friday (start_of_week + 5 days)
     end_datetime = start_of_week + timedelta(days=5)
+    
+    # Get all bookings within that range
     week_bookings = OfficeHour.objects.filter(booking_time__gte=start_datetime, booking_time__lt=end_datetime)
     
-    # Build a dictionary mapping a key "YYYY-MM-DD|H" to the booking
+    # Build the dictionary, converting each booking to local time
     bookings_dict = {}
     for booking in week_bookings:
-        key = f"{booking.booking_time.date()}|{booking.booking_time.hour}"
+        local_booking_time = timezone.localtime(booking.booking_time)
+        key = f"{local_booking_time.date()}|{local_booking_time.hour}"
         bookings_dict[key] = booking
 
     context = {
@@ -134,7 +140,6 @@ def student_dashboard(request):
         'week_offset': week_offset,
     }
     return render(request, 'student_dashboard.html', context)
-
 
 
 def admin_dashboard(request):

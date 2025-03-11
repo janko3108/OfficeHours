@@ -1,18 +1,23 @@
 {% extends "base.html" %}
+{% block title %}Book Office Hour | Office Scheduler{% endblock %}
+
 {% block content %}
-  <div class="form-container">
-    <h2>Book an Office Hour</h2>
+<div class="card shadow mx-auto" style="max-width: 500px;">
+  <div class="card-header bg-success text-white">
+    Book an Office Hour
+  </div>
+  <div class="card-body">
     {% if error %}
-      <p class="error">{{ error }}</p>
+      <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
     <form method="post">
       {% csrf_token %}
-      <div class="form-group">
-        <label for="booking_time">Booking Time</label>
-        <!-- Use the prefilled value if provided -->
-        <input type="datetime-local" name="booking_time" id="booking_time" value="{{ prefill.booking_time }}" required>
+      <div class="mb-3">
+         <label for="booking_time" class="form-label">Booking Time</label>
+         <input type="datetime-local" name="booking_time" id="booking_time" class="form-control" value="{{ prefill.booking_time }}" required>
       </div>
-      <button type="submit" class="btn">Book</button>
+      <button type="submit" class="btn btn-success w-100">Book Now</button>
     </form>
   </div>
+</div>
 {% endblock %}

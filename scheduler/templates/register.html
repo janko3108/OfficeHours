@@ -1,248 +1,46 @@
 {% extends "base.html" %}
+{% block title %}Register | Office Scheduler{% endblock %}
+
 {% block content %}
-  <div class="form-container">
-    <h2>Create Account</h2>
+<div class="card mx-auto shadow" style="max-width: 500px;">
+  <div class="card-header bg-secondary text-white">
+    Create Your Account
+  </div>
+  <div class="card-body">
     {% if error %}
-      <p class="error">{{ error }}</p>
+      <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
     <form method="post" id="registerForm">
       {% csrf_token %}
-      
-      <!-- Username Field -->
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" name="username" id="username" placeholder="Choose a username" required>
+      <div class="mb-3">
+         <label for="username" class="form-label">Username</label>
+         <input type="text" name="username" id="username" class="form-control" placeholder="Choose a username" required>
       </div>
-      
-      <!-- Email Field -->
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" name="email" id="email" placeholder="Enter your email" required>
-        <div id="email-message"></div>
+      <div class="mb-3">
+         <label for="email" class="form-label">Email</label>
+         <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email" required>
+         <div id="email-message" class="form-text"></div>
       </div>
-      
-      <!-- Password Field with Toggle Eye Icon -->
-      <div class="form-group password-group">
-        <label for="password">
-          Password (min 8 characters, one uppercase, one lowercase, one digit, one special character)
-        </label>
-        <input type="password" name="password" id="password" placeholder="Enter your password" required>
-        <span id="togglePassword" class="toggle-eye" style="cursor: pointer;">👁</span>
+      <div class="mb-3 position-relative">
+         <label for="password" class="form-label">Password</label>
+         <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
+         <span id="togglePassword" class="position-absolute top-50 end-0 translate-middle-y pe-3" style="cursor: pointer;">👁</span>
       </div>
-      
-      <!-- Requirements List -->
-      <ul id="password-requirements" class="requirements-list">
-        <li id="req-length">✗ At least 8 characters</li>
-        <li id="req-uppercase">✗ At least one uppercase letter</li>
-        <li id="req-lowercase">✗ At least one lowercase letter</li>
-        <li id="req-digit">✗ At least one digit</li>
-        <li id="req-special">✗ At least one special character (@$!%*?&)</li>
+      <ul id="password-requirements" class="list-unstyled small mb-3">
+         <li id="req-length">✗ At least 8 characters</li>
+         <li id="req-uppercase">✗ At least one uppercase letter</li>
+         <li id="req-lowercase">✗ At least one lowercase letter</li>
+         <li id="req-digit">✗ At least one digit</li>
+         <li id="req-special">✗ At least one special character (@$!%*?&)</li>
       </ul>
-      
-      <!-- Confirm Password Field -->
-      <div class="form-group">
-        <label for="confirm_password">Confirm Password</label>
-        <input type="password" name="confirm_password" id="confirm_password" placeholder="Re-enter your password" required>
+      <div class="mb-3">
+         <label for="confirm_password" class="form-label">Confirm Password</label>
+         <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Confirm your password" required>
       </div>
-      <div id="password-match-message"></div>
-      
-      <button type="submit" id="registerButton" disabled>Register</button>
+      <div id="password-match-message" class="mb-3"></div>
+      <button type="submit" id="registerButton" class="btn btn-secondary w-100" disabled>Register</button>
     </form>
-    <p>Already have an account? <a href="{% url 'two_factor:login' %}">Login here</a></p>
+    <p class="mt-3 text-center">Already have an account? <a href="{% url 'two_factor:login' %}">Login here</a></p>
   </div>
-  
-  <script>
-    // Get references to form elements
-    const registerForm = document.getElementById('registerForm');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const confirmPasswordInput = document.getElementById('confirm_password');
-    const emailMessageDiv = document.getElementById('email-message');
-    const passwordMatchDiv = document.getElementById('password-match-message');
-    const registerButton = document.getElementById('registerButton');
-    
-    // References to the requirement list items
-    const reqLength = document.getElementById('req-length');
-    const reqUpper = document.getElementById('req-uppercase');
-    const reqLower = document.getElementById('req-lowercase');
-    const reqDigit = document.getElementById('req-digit');
-    const reqSpecial = document.getElementById('req-special');
-    
-    // Eye toggle element for password visibility
-    const togglePassword = document.getElementById('togglePassword');
-    
-    // Validation state flags
-    let emailValid = false;
-    let passwordValid = false;
-    let passwordsMatch = false;
-    
-    // Regular expressions for individual requirements
-    const regexLength = /.{8,}/;
-    const regexUpper = /[A-Z]/;
-    const regexLower = /[a-z]/;
-    const regexDigit = /\d/;
-    const regexSpecial = /[@$!%*?&]/;
-    
-    // Function to update the Register button state
-    function updateRegisterButton() {
-      if (emailValid && passwordValid && passwordsMatch) {
-        registerButton.disabled = false;
-      } else {
-        registerButton.disabled = true;
-      }
-    }
-    
-    // Check each password requirement and update list items
-    function checkPasswordCriteria() {
-      const password = passwordInput.value;
-      let valid = true;
-      
-      if (regexLength.test(password)) {
-        reqLength.textContent = '✓ At least 8 characters';
-        reqLength.style.color = 'green';
-      } else {
-        reqLength.textContent = '✗ At least 8 characters';
-        reqLength.style.color = 'red';
-        valid = false;
-      }
-      
-      if (regexUpper.test(password)) {
-        reqUpper.textContent = '✓ At least one uppercase letter';
-        reqUpper.style.color = 'green';
-      } else {
-        reqUpper.textContent = '✗ At least one uppercase letter';
-        reqUpper.style.color = 'red';
-        valid = false;
-      }
-      
-      if (regexLower.test(password)) {
-        reqLower.textContent = '✓ At least one lowercase letter';
-        reqLower.style.color = 'green';
-      } else {
-        reqLower.textContent = '✗ At least one lowercase letter';
-        reqLower.style.color = 'red';
-        valid = false;
-      }
-      
-      if (regexDigit.test(password)) {
-        reqDigit.textContent = '✓ At least one digit';
-        reqDigit.style.color = 'green';
-      } else {
-        reqDigit.textContent = '✗ At least one digit';
-        reqDigit.style.color = 'red';
-        valid = false;
-      }
-      
-      if (regexSpecial.test(password)) {
-        reqSpecial.textContent = '✓ At least one special character (@$!%*?&)';
-        reqSpecial.style.color = 'green';
-      } else {
-        reqSpecial.textContent = '✗ At least one special character (@$!%*?&)';
-        reqSpecial.style.color = 'red';
-        valid = false;
-      }
-      
-      passwordValid = valid;
-      updateRegisterButton();
-    }
-    
-    // Check if the two passwords match
-    function checkPasswordsMatch() {
-      if (passwordInput.value === confirmPasswordInput.value && passwordInput.value !== "") {
-        passwordMatchDiv.textContent = 'Passwords match';
-        passwordMatchDiv.style.color = 'green';
-        passwordsMatch = true;
-      } else {
-        passwordMatchDiv.textContent = 'Passwords do not match';
-        passwordMatchDiv.style.color = 'red';
-        passwordsMatch = false;
-      }
-      updateRegisterButton();
-    }
-    
-    // Check email uniqueness via AJAX using Fetch API
-    function checkEmailUniqueness() {
-      const email = emailInput.value.trim();
-      if (!email) {
-        emailMessageDiv.textContent = '';
-        emailValid = false;
-        updateRegisterButton();
-        return;
-      }
-      
-      fetch(`/api/check_email/?email=${encodeURIComponent(email)}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.exists) {
-            emailMessageDiv.textContent = 'Email is already taken';
-            emailMessageDiv.style.color = 'red';
-            emailValid = false;
-          } else {
-            emailMessageDiv.textContent = 'Email is available';
-            emailMessageDiv.style.color = 'green';
-            emailValid = true;
-          }
-          updateRegisterButton();
-        })
-        .catch(error => {
-          console.error('Error checking email uniqueness:', error);
-          emailMessageDiv.textContent = '';
-          emailValid = false;
-          updateRegisterButton();
-        });
-    }
-    
-    // Toggle password visibility
-    togglePassword.addEventListener('click', function() {
-      // Toggle the type attribute
-      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passwordInput.setAttribute('type', type);
-      confirmPasswordInput.setAttribute('type', type);
-      // Optionally change the icon
-      this.textContent = type === 'password' ? '👁' : '👁‍🗨';
-    });
-    
-    // Attach event listeners for live validation
-    passwordInput.addEventListener('keyup', function() {
-      checkPasswordCriteria();
-      checkPasswordsMatch();
-    });
-    confirmPasswordInput.addEventListener('keyup', checkPasswordsMatch);
-    emailInput.addEventListener('blur', checkEmailUniqueness);
-    
-    // Confirm submission before form submission (proceeding to 2FA setup)
-    registerForm.addEventListener('submit', function(event) {
-      const proceed = confirm("You clicked Register. Proceed to set up 2FA? Click Cancel to remain on this page.");
-      if (!proceed) {
-        event.preventDefault();
-        console.log("User canceled registration. Staying on the registration page.");
-        return false;
-      }
-      console.log("User confirmed registration; proceeding to 2FA setup.");
-    });
-  </script>
-  
-  <style>
-    /* Additional inline styles for the requirements list and toggle icon */
-    .requirements-list {
-      list-style: none;
-      padding: 0;
-      margin: 10px 0;
-    }
-    .requirements-list li {
-      font-size: 0.9rem;
-      margin-bottom: 5px;
-    }
-    .password-group {
-      position: relative;
-    }
-    .toggle-eye {
-      position: absolute;
-      top: 50%;
-      right: 10px;
-      transform: translateY(-50%);
-      font-size: 1.2rem;
-    }
-  </style>
-  
+</div>
 {% endblock %}
