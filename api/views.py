@@ -1,33 +1,23 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate  # Added authenticate here
+from django.contrib.auth import login, logout, authenticate
 from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-
-# Django REST Framework imports (if needed)
 from rest_framework import generics, permissions
 from rest_framework.authtoken.views import ObtainAuthToken
-
 from .serializers import UserRegistrationSerializer, OfficeHourSerializer
-from django.shortcuts import redirect
 from django.http import JsonResponse
-from django.contrib.auth.models import User
-from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from datetime import datetime, timedelta
-from django.shortcuts import render
 from .models import OfficeHour
-from django.utils import timezone  # Import timezone utilities
+from django.utils import timezone
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
+import json
 
 
-
-
-
-# ========= DRF API VIEWS =========
-
+# --- DRF API VIEWS ---
 class UserRegistrationAPIView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
@@ -50,18 +40,26 @@ class CustomObtainAuthToken(ObtainAuthToken):
         token = Token.objects.get(key=response.data['token'])
         return Response({'token': token.key, 'user_id': token.user_id})
 
-# ========= WEB VIEWS =========
+# --- WEB/API VIEWS ---
 
+@login_required
+def current_user(request):
+    user = request.user
+    return JsonResponse({
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'isAdmin': user.is_staff
+    })
 
 def home(request):
-    # If the user is authenticated, send them to the proper dashboard
+    # This view won't be used for UI; Angular handles the landing page.
     if request.user.is_authenticated:
         if request.user.is_staff:
             return redirect('admin_dashboard')
         else:
             return redirect('student_dashboard')
-    # Otherwise, show the public landing page (named "dashboard.html" here)
-    return render(request, 'dashboard.html')
+    return render(request, 'dashboard.html')  # You might remove this if not used.
 
 def student_register(request):
     if request.method == 'POST':
@@ -69,25 +67,20 @@ def student_register(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
-
         if password != confirm_password:
             context = {'error': 'Passwords do not match.'}
             return render(request, 'register.html', context)
-
         if User.objects.filter(username=username).exists():
             context = {'error': 'Username already exists. Please choose another.'}
             return render(request, 'register.html', context)
-
         try:
             user = User.objects.create_user(username=username, email=email, password=password)
             login(request, user)
-            # Redirect to 2FA setup page; after enrollment, redirect to dashboard.
             return redirect(reverse('two_factor:setup') + '?next=/dashboard/')
         except IntegrityError:
             context = {'error': 'Username already exists. Please choose another.'}
             return render(request, 'register.html', context)
     return render(request, 'register.html')
-
 
 def student_login(request):
     if request.method == 'POST':
@@ -96,7 +89,6 @@ def student_login(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            # Check if the request expects JSON:
             if request.headers.get('Content-Type') == 'application/json':
                 return JsonResponse({'message': 'Login successful'})
             else:
@@ -113,7 +105,8 @@ def student_login(request):
 
 def student_logout(request):
     logout(request)
-    return redirect('login')
+    request.session.flush()  # Ensure the session data is cleared
+    return JsonResponse({'message': 'Logged out successfully'})
 
 @login_required
 def student_dashboard(request):
@@ -121,25 +114,13 @@ def student_dashboard(request):
         week_offset = int(request.GET.get('week', 0))
     except ValueError:
         week_offset = 0
-
     now = timezone.localtime(timezone.now())
-    # Calculate the start of the week (Monday) as a timezone-aware datetime at midnight
     start_of_week = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(weeks=week_offset)
-    
-    # Define weekdays (Monday to Friday)
     week_days = [start_of_week + timedelta(days=i) for i in range(5)]
-    
-    # Define time slots starting at 8:00 AM for 8 hours
     time_slots = [start_of_week.replace(hour=8) + timedelta(hours=i) for i in range(8)]
-    
-    # Determine the date range for bookings
     start_datetime = start_of_week
     end_datetime = start_of_week + timedelta(days=5)
-    
-    # Get all bookings within that range
     week_bookings = OfficeHour.objects.filter(booking_time__gte=start_datetime, booking_time__lt=end_datetime)
-    
-    # Build a dictionary mapping "date|hour" to booking details
     bookings_dict = {}
     for booking in week_bookings:
         local_booking_time = timezone.localtime(booking.booking_time)
@@ -149,7 +130,6 @@ def student_dashboard(request):
             'student': booking.student.username,
             'booking_time': booking.booking_time.isoformat(),
         }
-    
     data = {
         'week_days': [day.isoformat() for day in week_days],
         'time_slots': [slot.isoformat() for slot in time_slots],
@@ -158,12 +138,10 @@ def student_dashboard(request):
     }
     return JsonResponse(data)
 
-
 @staff_member_required
 def admin_dashboard(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return JsonResponse({'error': 'Unauthorized'}, status=403)
-    
     bookings = OfficeHour.objects.all()
     bookings_list = [{
         'id': b.id,
@@ -171,7 +149,6 @@ def admin_dashboard(request):
         'booking_time': b.booking_time.isoformat(),
         'created_at': b.created_at.isoformat()
     } for b in bookings]
-    
     return JsonResponse({'bookings': bookings_list})
 
 @login_required
@@ -182,27 +159,19 @@ def book_office_hour(request):
             booking_time = datetime.strptime(booking_time_str, "%Y-%m-%dT%H:%M")
         except ValueError:
             return render(request, 'book_office_hour.html', {'error': 'Invalid booking time format.'})
-        
-        # Check if a booking already exists for this time
         if OfficeHour.objects.filter(booking_time=booking_time).exists():
             return render(request, 'book_office_hour.html', {'error': 'This time slot is already booked. Please choose another time.'})
-        
         OfficeHour.objects.create(student=request.user, booking_time=booking_time)
         return redirect('student_dashboard')
-    
-    # For GET requests, try to prefill the form if parameters are provided.
     prefill = {}
     day = request.GET.get('day')
     hour = request.GET.get('hour')
     if day and hour:
         try:
-            # Format a datetime string that the booking form expects (e.g., datetime-local input)
             prefill['booking_time'] = f"{day}T{int(hour):02d}:00"
         except ValueError:
             pass
-
     return render(request, 'book_office_hour.html', {'prefill': prefill})
-
 
 @staff_member_required
 def admin_edit_booking(request, booking_id):
@@ -210,7 +179,6 @@ def admin_edit_booking(request, booking_id):
         booking = OfficeHour.objects.get(id=booking_id)
     except OfficeHour.DoesNotExist:
         return redirect('admin_dashboard')
-    
     if request.method == 'POST':
         booking_time_str = request.POST.get('booking_time')
         try:
@@ -218,33 +186,28 @@ def admin_edit_booking(request, booking_id):
         except ValueError:
             context = {'error': 'Invalid booking time format.', 'booking': booking}
             return render(request, 'admin_edit_booking.html', context)
-        
-        # Ensure no other booking exists at this new time
         if OfficeHour.objects.filter(booking_time=new_booking_time).exclude(id=booking.id).exists():
             context = {'error': 'This time slot is already booked by another user.', 'booking': booking}
             return render(request, 'admin_edit_booking.html', context)
-        
         booking.booking_time = new_booking_time
         booking.save()
         return redirect('admin_dashboard')
-    
     context = {'booking': booking}
     return render(request, 'admin_edit_booking.html', context)
 
+@csrf_exempt  # Remove or use csrf_protect if you pass a valid CSRF token in the header
 @staff_member_required
 def admin_delete_booking(request, booking_id):
     try:
         booking = OfficeHour.objects.get(id=booking_id)
     except OfficeHour.DoesNotExist:
-        return redirect('admin_dashboard')
+        return JsonResponse({'error': 'Booking not found'}, status=404)
     
-    if request.method == 'POST':
+    if request.method == 'DELETE':
         booking.delete()
-        return redirect('admin_dashboard')
-    
-    context = {'booking': booking}
-    return render(request, 'admin_delete_booking.html', context)
-
+        return JsonResponse({'message': 'Booking deleted successfully'})
+    else:
+        return JsonResponse({'error': 'Only DELETE method is allowed'}, status=405)
 
 def check_email(request):
     email = request.GET.get('email', '').strip()
@@ -255,7 +218,7 @@ def get_csrf_token(request):
     token = get_token(request)
     return JsonResponse({'csrfToken': token})
 
-@csrf_exempt  # For testing; see note below about CSRF handling
+@csrf_exempt  # For testing; ideally, handle CSRF properly.
 def api_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -263,8 +226,40 @@ def api_login(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            # Instead of redirecting, return JSON
             return JsonResponse({'message': 'Login successful'})
         else:
             return JsonResponse({'error': 'Invalid credentials'}, status=400)
     return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+@csrf_exempt  # Use proper CSRF protection in production!
+@staff_member_required
+def admin_edit_booking_api(request, booking_id):
+    try:
+        booking = OfficeHour.objects.get(id=booking_id)
+    except OfficeHour.DoesNotExist:
+        return JsonResponse({'error': 'Booking not found'}, status=404)
+
+    if request.method == 'GET':
+        data = {
+            'id': booking.id,
+            'booking_time': booking.booking_time.isoformat()
+        }
+        return JsonResponse(data)
+
+    elif request.method == 'PUT':
+        try:
+            body = json.loads(request.body)
+            new_booking_time_str = body.get('booking_time')
+            new_booking_time = datetime.strptime(new_booking_time_str, "%Y-%m-%dT%H:%M")
+        except Exception as e:
+            return JsonResponse({'error': 'Invalid booking time format'}, status=400)
+
+        if OfficeHour.objects.filter(booking_time=new_booking_time).exclude(id=booking.id).exists():
+            return JsonResponse({'error': 'This time slot is already booked by another user.'}, status=400)
+
+        booking.booking_time = new_booking_time
+        booking.save()
+        return JsonResponse({'message': 'Booking updated successfully'})
+
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)

@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   standalone: true,
-  selector: 'app-dashboard',
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css'],
-  imports: [CommonModule]  // Import CommonModule for *ngFor, *ngIf, etc.
+  selector: 'app-home',
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.css'],
+  imports: [CommonModule]
 })
-export class DashboardComponent {
+export class HomeComponent {
   features = [
     { title: 'Seamless Scheduling', description: 'Book and manage your office hours with ease.' },
     { title: 'Real-Time Notifications', description: 'Stay updated on your appointments instantly.' },

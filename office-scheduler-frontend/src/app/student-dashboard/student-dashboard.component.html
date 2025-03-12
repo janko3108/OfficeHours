@@ -1,9 +1,17 @@
-<!-- Only display the dashboard once dashboardData is defined -->
-<div *ngIf="dashboardData; else loadingTemplate" class="dashboard-container">
-  <h1>Student Dashboard</h1>
-  <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
-  
-  <table class="dashboard-table">
+<div class="dashboard-container" *ngIf="dashboardData; else loadingTemplate">
+  <header class="dashboard-header animated">
+    <h1>Student Dashboard</h1>
+    <div class="welcome-banner">
+      <h2>Welcome to Your Office Hours Scheduler!</h2>
+      <p>
+        Use the navigation below to view and book available slots for the week.
+        Click on a time slot to reserve your spot.
+      </p>
+    </div>
+  </header>
+
+  <!-- Dashboard Table -->
+  <table class="dashboard-table animated">
     <thead>
       <tr>
         <th>Time</th>
@@ -13,23 +21,34 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let slot of dashboardData.time_slots">
+      <tr *ngFor="let slot of dashboardData.time_slots" class="table-row">
         <td>
           {{ slot | date:'HH:mm' }} - {{ getEndTime(slot) }}
         </td>
         <td *ngFor="let day of dashboardData.week_days">
-          <ng-container *ngIf="isBooked(day, getHour(slot)); else available">
-            Booked
+          <ng-container *ngIf="getBooking(day, getHour(slot)) as booking; else available">
+            <span class="booked">
+              {{ booking.student === currentUser?.username ? 'Booked by you' : 'Booked by ' + booking.student }}
+            </span>
           </ng-container>
           <ng-template #available>
-            Available
+            <button (click)="bookSlot(day, slot)" class="book-btn">Book</button>
           </ng-template>
         </td>
       </tr>
     </tbody>
   </table>
+
+  <div *ngIf="errorMessage" class="error animated">{{ errorMessage }}</div>
+
+  <!-- Week Navigation Controls -->
+  <div class="week-nav animated">
+    <button (click)="previousWeek()" class="nav-btn">&laquo; Previous Week</button>
+    <span class="week-info">Week Offset: {{ weekOffset }}</span>
+    <button (click)="nextWeek()" class="nav-btn">Next Week &raquo;</button>
+  </div>
 </div>
 
 <ng-template #loadingTemplate>
-  <div class="loading">Loading dashboard data...</div>
+  <div class="loading animated">Loading dashboard data...</div>
 </ng-template>

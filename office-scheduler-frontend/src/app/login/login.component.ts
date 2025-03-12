@@ -1,20 +1,41 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { AuthService } from '../services/auth.service';
 
 @Component({
-  standalone: true,
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css'],
-  imports: [CommonModule, FormsModule]
+  styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-  constructor(private router: Router) {}
+  credentials = { username: '', password: '' };
+  errorMessage = '';
+
+  constructor(private authService: AuthService, private router: Router) {}
 
   login(): void {
-    // Instead of sending a POST request, redirect to Django's two_factor login page.
-    window.location.href = 'http://localhost:8000/login/';
+    this.authService.login(this.credentials).subscribe({
+      next: () => {
+        // After successful login, fetch current user data
+        this.authService.fetchCurrentUser().subscribe({
+          next: (user) => {
+            console.log("Logged in user:", user);
+            if (user && user.isAdmin) {
+              this.router.navigate(['/admin-dashboard']);
+            } else {
+              this.router.navigate(['/dashboard']);
+            }
+          },
+          error: (err) => {
+            console.error("Error fetching user:", err);
+            this.errorMessage = 'Could not retrieve user information after login.';
+          }
+        });
+      },
+      error: (err) => {
+        console.error("Login failed:", err);
+        this.errorMessage = 'Login failed. Please check your credentials.';
+      }
+    });
   }
 }

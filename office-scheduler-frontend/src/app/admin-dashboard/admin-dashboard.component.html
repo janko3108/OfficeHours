@@ -1,27 +1,62 @@
 <div class="admin-dashboard-container" *ngIf="!loading; else loadingTemplate">
+  <header class="dashboard-header animated">
     <h1>Admin Dashboard</h1>
+    <div class="welcome-banner">
+      <h2>Welcome, {{ currentUser?.username || 'Administrator' }}!</h2>
+      <p>
+        Manage your bookings and schedule with ease. Enjoy the seamless experience and real‑time updates.
+      </p>
+    </div>
+  </header>
+  
+  <section class="dashboard-content animated">
+    <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Student</th>
+            <th>Booking Time</th>
+            <th>Created At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let booking of bookings" class="table-row animated">
+            <td>{{ booking.id }}</td>
+            <td>{{ booking.student }}</td>
+            <td>{{ booking.booking_time | date:'medium' }}</td>
+            <td>{{ booking.created_at | date:'medium' }}</td>
+            <td>
+              <button (click)="openEditModal($event, booking)" class="action-btn edit">Edit</button>
+              <button (click)="deleteBooking(booking.id)" class="action-btn delete">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<ng-template #loadingTemplate>
+  <div class="loading animated">Loading bookings...</div>
+</ng-template>
+
+<!-- Modal for Editing Booking -->
+<div class="modal-overlay" *ngIf="editingBooking">
+  <div class="modal animated">
+    <h2>Edit Booking (ID: {{ editingBooking.id }})</h2>
+    <form (ngSubmit)="updateBooking()">
+      <div class="form-group">
+        <label for="editBookingTime">Booking Time:</label>
+        <input type="datetime-local" id="editBookingTime" name="editBookingTime" [(ngModel)]="editingBookingTime" required>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="action-btn">Update</button>
+        <button type="button" class="action-btn cancel" (click)="closeEditModal()">Cancel</button>
+      </div>
+    </form>
     <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
-    <table class="admin-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Student</th>
-          <th>Booking Time</th>
-          <th>Created At</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let booking of bookings">
-          <td>{{ booking.id }}</td>
-          <td>{{ booking.student }}</td>
-          <td>{{ booking.booking_time | date: 'medium' }}</td>
-          <td>{{ booking.created_at | date: 'medium' }}</td>
-        </tr>
-      </tbody>
-    </table>
   </div>
-  
-  <ng-template #loadingTemplate>
-    <div class="loading">Loading admin dashboard data...</div>
-  </ng-template>
-  
+</div>

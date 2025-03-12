@@ -1,20 +1,32 @@
 <header class="app-header">
   <div class="header-container">
     <div class="brand">
-      <a routerLink="/">Office Scheduler</a>
+      <a routerLink="/home">Office Scheduler</a>
     </div>
     <nav class="nav-links">
-      <a routerLink="/dashboard">Dashboard</a>
-      <a href="http://localhost:8000/login/">Login</a>
-      <a routerLink="/register">Register</a>
+      <!-- If logged in, show Dashboard and Logout links -->
+      <ng-container *ngIf="currentUser; else loggedOut">
+        <a routerLink="{{ currentUser.isAdmin ? '/admin-dashboard' : '/dashboard' }}">Dashboard</a>
+        <a href="javascript:void(0)" (click)="logout()">Logout</a>
+      </ng-container>
+      <!-- If not logged in, show Login and Register links -->
+      <ng-template #loggedOut>
+        <a href="http://localhost:8000/login/">Login</a>
+        <a routerLink="/register">Register</a>
+      </ng-template>
     </nav>
     <button class="hamburger" (click)="toggleMenu()">
       <span [class.open]="menuOpen">&#9776;</span>
     </button>
   </div>
   <div class="mobile-menu" [class.show]="menuOpen">
-    <a routerLink="/dashboard" (click)="toggleMenu()">Dashboard</a>
-    <a href="http://localhost:8000/login/">Login</a>
-    <a routerLink="/register" (click)="toggleMenu()">Register</a>
+    <ng-container *ngIf="currentUser; else mobileLoggedOut">
+      <a routerLink="{{ currentUser.isAdmin ? '/admin-dashboard' : '/dashboard' }}" (click)="toggleMenu()">Dashboard</a>
+      <a href="javascript:void(0)" (click)="logout(); toggleMenu()">Logout</a>
+    </ng-container>
+    <ng-template #mobileLoggedOut>
+      <a href="http://localhost:8000/login/" (click)="toggleMenu()">Login</a>
+      <a routerLink="/register" (click)="toggleMenu()">Register</a>
+    </ng-template>
   </div>
 </header>
