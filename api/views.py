@@ -54,10 +54,14 @@ class CustomObtainAuthToken(ObtainAuthToken):
 
 
 def home(request):
+    # If the user is authenticated, send them to the proper dashboard
     if request.user.is_authenticated:
-        return redirect('student_dashboard')
-    else:
-        return redirect('register')
+        if request.user.is_staff:
+            return redirect('admin_dashboard')
+        else:
+            return redirect('student_dashboard')
+    # Otherwise, show the public landing page (named "dashboard.html" here)
+    return render(request, 'dashboard.html')
 
 def student_register(request):
     if request.method == 'POST':
@@ -118,9 +122,7 @@ def student_dashboard(request):
     except ValueError:
         week_offset = 0
 
-    # Use timezone-aware current time
     now = timezone.localtime(timezone.now())
-    
     # Calculate the start of the week (Monday) as a timezone-aware datetime at midnight
     start_of_week = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(weeks=week_offset)
     
@@ -130,34 +132,47 @@ def student_dashboard(request):
     # Define time slots starting at 8:00 AM for 8 hours
     time_slots = [start_of_week.replace(hour=8) + timedelta(hours=i) for i in range(8)]
     
-    # Use the start of Monday and end at the start of Saturday (5 days later)
+    # Determine the date range for bookings
     start_datetime = start_of_week
     end_datetime = start_of_week + timedelta(days=5)
     
     # Get all bookings within that range
     week_bookings = OfficeHour.objects.filter(booking_time__gte=start_datetime, booking_time__lt=end_datetime)
     
-    # Build the dictionary, converting each booking to local time
+    # Build a dictionary mapping "date|hour" to booking details
     bookings_dict = {}
     for booking in week_bookings:
         local_booking_time = timezone.localtime(booking.booking_time)
         key = f"{local_booking_time.date()}|{local_booking_time.hour}"
-        bookings_dict[key] = booking
-
-    context = {
-        'week_days': week_days,
-        'time_slots': time_slots,
+        bookings_dict[key] = {
+            'id': booking.id,
+            'student': booking.student.username,
+            'booking_time': booking.booking_time.isoformat(),
+        }
+    
+    data = {
+        'week_days': [day.isoformat() for day in week_days],
+        'time_slots': [slot.isoformat() for slot in time_slots],
         'bookings_dict': bookings_dict,
         'week_offset': week_offset,
     }
-    return render(request, 'student_dashboard.html', context)
+    return JsonResponse(data)
 
 
+@staff_member_required
 def admin_dashboard(request):
     if not request.user.is_authenticated or not request.user.is_staff:
-        return redirect('login')
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
     bookings = OfficeHour.objects.all()
-    return render(request, 'admin_dashboard.html', {'bookings': bookings})
+    bookings_list = [{
+        'id': b.id,
+        'student': b.student.username,
+        'booking_time': b.booking_time.isoformat(),
+        'created_at': b.created_at.isoformat()
+    } for b in bookings]
+    
+    return JsonResponse({'bookings': bookings_list})
 
 @login_required
 def book_office_hour(request):

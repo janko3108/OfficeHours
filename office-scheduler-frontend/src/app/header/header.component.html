@@ -5,7 +5,7 @@
     </div>
     <nav class="nav-links">
       <a routerLink="/dashboard">Dashboard</a>
-      <a routerLink="/login">Login</a>
+      <a href="http://localhost:8000/login/">Login</a>
       <a routerLink="/register">Register</a>
     </nav>
     <button class="hamburger" (click)="toggleMenu()">
@@ -14,7 +14,7 @@
   </div>
   <div class="mobile-menu" [class.show]="menuOpen">
     <a routerLink="/dashboard" (click)="toggleMenu()">Dashboard</a>
-    <a routerLink="/login" (click)="toggleMenu()">Login</a>
+    <a href="http://localhost:8000/login/">Login</a>
     <a routerLink="/register" (click)="toggleMenu()">Register</a>
   </div>
 </header>

@@ -1,0 +1,44 @@
+.dashboard-container {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.dashboard-container h1 {
+  text-align: center;
+  color: #1e3c72;
+  margin-bottom: 1rem;
+}
+
+.error {
+  color: #cc0000;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.dashboard-table th {
+  background-color: #f4f4f4;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #555;
+  margin-top: 2rem;
+}

@@ -1,20 +1,13 @@
 import { Routes } from '@angular/router';
+import { StudentDashboardComponent } from './student-dashboard/student-dashboard.component';
+import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
+import { LoginComponent } from './login/login.component';
+import { RegisterComponent } from './register/register.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  {
-    path: 'dashboard',
-    loadComponent: () => import('./dashboard/dashboard.component')
-      .then(m => m.DashboardComponent)
-  },
-  {
-    path: 'login',
-    loadComponent: () => import('./login/login.component')
-      .then(m => m.LoginComponent)
-  },
-  {
-    path: 'register',
-    loadComponent: () => import('./register/register.component')
-      .then(m => m.RegisterComponent)
-  }
+  { path: 'dashboard', component: StudentDashboardComponent },
+  { path: 'admin-dashboard', component: AdminDashboardComponent },
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
 ];

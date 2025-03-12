@@ -1,0 +1,35 @@
+<!-- Only display the dashboard once dashboardData is defined -->
+<div *ngIf="dashboardData; else loadingTemplate" class="dashboard-container">
+  <h1>Student Dashboard</h1>
+  <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+  
+  <table class="dashboard-table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th *ngFor="let day of dashboardData.week_days">
+          {{ day | date: 'EEE, MMM d' }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let slot of dashboardData.time_slots">
+        <td>
+          {{ slot | date:'HH:mm' }} - {{ getEndTime(slot) }}
+        </td>
+        <td *ngFor="let day of dashboardData.week_days">
+          <ng-container *ngIf="isBooked(day, getHour(slot)); else available">
+            Booked
+          </ng-container>
+          <ng-template #available>
+            Available
+          </ng-template>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<ng-template #loadingTemplate>
+  <div class="loading">Loading dashboard data...</div>
+</ng-template>
