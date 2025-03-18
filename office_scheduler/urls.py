@@ -13,6 +13,9 @@ urlpatterns = [
         include((two_factor_urls_module.urlpatterns[0], two_factor_urls_module.urlpatterns[1]), namespace='two_factor')
     ),
     
+    path('accounts/login/', lambda request: redirect('two_factor:login'), name='accounts_login'),
+
+    
     # Redirect /login/ to two_factor login
     path('login/', lambda request: redirect('two_factor:login'), name='login'),
     

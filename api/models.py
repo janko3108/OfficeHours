@@ -10,3 +10,10 @@ class OfficeHour(models.Model):
 
     def __str__(self):
         return f"{self.student.username} booked {self.booking_time}"
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    two_factor_completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.user.username

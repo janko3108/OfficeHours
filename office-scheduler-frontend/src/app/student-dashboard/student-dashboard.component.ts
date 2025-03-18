@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { OfficeHourService, DashboardData } from '../services/office-hour.service';
+import { AuthService, User } from '../services/auth.service';
 import { CommonModule } from '@angular/common';
+import { NotificationService } from '../notification.service';
 
 @Component({
   standalone: true,
@@ -14,9 +16,13 @@ export class StudentDashboardComponent implements OnInit {
   errorMessage: string = '';
   loading: boolean = true;
   weekOffset: number = 0;
-  currentUser: any = null; // To store logged-in user's details
+  currentUser: User | null = null; // Logged-in user's details
 
-  constructor(private officeHourService: OfficeHourService) {}
+  constructor(
+    private officeHourService: OfficeHourService,
+    private authService: AuthService,
+    private notificationService: NotificationService
+  ) { }
 
   ngOnInit(): void {
     this.fetchDashboardData(this.weekOffset);
@@ -39,8 +45,8 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   fetchCurrentUser(): void {
-    this.officeHourService.getCurrentUser().subscribe({
-      next: (user: any) => {
+    this.authService.getCurrentUser().subscribe({
+      next: (user: User) => {
         this.currentUser = user;
       },
       error: (err: any) => {
@@ -51,8 +57,10 @@ export class StudentDashboardComponent implements OnInit {
 
   // Navigate to previous week
   previousWeek(): void {
-    this.weekOffset--;
-    this.fetchDashboardData(this.weekOffset);
+    if (this.weekOffset > 0) {
+      this.weekOffset--;
+      this.fetchDashboardData(this.weekOffset);
+    }
   }
 
   // Navigate to next week
@@ -61,19 +69,19 @@ export class StudentDashboardComponent implements OnInit {
     this.fetchDashboardData(this.weekOffset);
   }
 
-  // Helper: extract the hour from an ISO date string
+  // Extract hour from ISO date string
   getHour(slot: string): number {
     return new Date(slot).getHours();
   }
 
-  // Helper: compute the end time (start hour + 1) formatted as "HH:00"
+  // Compute end time (start hour + 1) formatted as "HH:00"
   getEndTime(slot: string): string {
     const startHour = new Date(slot).getHours();
     const endHour = startHour + 1;
     return (endHour < 10 ? '0' : '') + endHour + ':00';
   }
 
-  // Return the booking object for a given day and hour, if exists.
+  // Return booking object for a given day and hour (if exists)
   getBooking(day: string, hour: number): any {
     if (!this.dashboardData) return null;
     const dateOnly = day.split('T')[0];
@@ -85,17 +93,26 @@ export class StudentDashboardComponent implements OnInit {
   bookSlot(day: string, slot: string): void {
     const dateOnly = day.split('T')[0];
     const hour = this.getHour(slot);
-    // Construct booking time as "YYYY-MM-DDTHH:00"
     const bookingTime = `${dateOnly}T${hour < 10 ? '0' + hour : hour}:00`;
     console.log('Attempting to book:', bookingTime);
     this.officeHourService.bookOfficeHour(bookingTime).subscribe({
       next: (response) => {
         console.log('Booking successful:', response);
+        this.notificationService.showNotification({
+          type: 'success',
+          title: 'Success',
+          message: 'Booking successfully made!'
+        });
         this.fetchDashboardData(this.weekOffset);
       },
       error: (err) => {
         console.error('Booking error:', err);
         this.errorMessage = 'Booking failed. Please try again.';
+        this.notificationService.showNotification({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to make booking!'
+        });
       }
     });
   }

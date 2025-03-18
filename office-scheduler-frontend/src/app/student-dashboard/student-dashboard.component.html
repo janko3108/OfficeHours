@@ -43,9 +43,14 @@
 
   <!-- Week Navigation Controls -->
   <div class="week-nav animated">
-    <button (click)="previousWeek()" class="nav-btn">&laquo; Previous Week</button>
+    <button (click)="previousWeek()" class="nav-btn" [disabled]="weekOffset === 0">
+      &laquo; Previous Week
+    </button>
     <span class="week-info">Week Offset: {{ weekOffset }}</span>
-    <button (click)="nextWeek()" class="nav-btn">Next Week &raquo;</button>
+    <button (click)="nextWeek()" class="nav-btn">
+      Next Week &raquo;
+    </button>
+    
   </div>
 </div>
 

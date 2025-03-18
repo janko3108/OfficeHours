@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { OfficeHourService } from '../services/office-hour.service'; // adjust the path accordingly
+import { OfficeHourService } from '../services/office-hour.service';
+import { AuthService, User } from '../services/auth.service';
+import { NotificationService } from '../notification.service';
 
 @Component({
   standalone: true,
@@ -14,13 +16,17 @@ export class AdminDashboardComponent implements OnInit {
   bookings: any[] = [];
   errorMessage: string = '';
   loading: boolean = true;
-  currentUser: any; // Holds the logged-in user's info
+  currentUser: User | null = null;  // holds logged-in user's info
 
   // Properties for modal editing
   editingBooking: any = null;
   editingBookingTime: string = '';
 
-  constructor(private officeHourService: OfficeHourService) { }
+  constructor(
+    private officeHourService: OfficeHourService,
+    private authService: AuthService,
+    private notificationService: NotificationService
+  ) { }
 
   ngOnInit(): void {
     this.fetchBookings();
@@ -43,8 +49,8 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   fetchCurrentUser(): void {
-    this.officeHourService.getCurrentUser().subscribe({
-      next: (user: any) => {
+    this.authService.getCurrentUser().subscribe({
+      next: (user: User) => {
         this.currentUser = user;
       },
       error: (err: any) => {
@@ -71,12 +77,22 @@ export class AdminDashboardComponent implements OnInit {
     this.officeHourService.updateBooking(this.editingBooking.id, this.editingBookingTime).subscribe({
       next: (data: any) => {
         console.log('Booking updated:', data);
+        this.notificationService.showNotification({
+          type: 'info',
+          title: 'Update',
+          message: 'Booking updated successfully!'
+        });
         this.fetchBookings();
         this.closeEditModal();
       },
       error: (err: any) => {
         console.error(err);
         this.errorMessage = 'Failed to update booking.';
+        this.notificationService.showNotification({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to update booking!'
+        });
       }
     });
   }
@@ -86,11 +102,21 @@ export class AdminDashboardComponent implements OnInit {
       this.officeHourService.deleteBooking(bookingId).subscribe({
         next: (res: any) => {
           console.log('Booking deleted:', res);
+          this.notificationService.showNotification({
+            type: 'error',
+            title: 'Deleted',
+            message: 'Booking deleted successfully!'
+          });
           this.fetchBookings();
         },
         error: (err: any) => {
           console.error('Error deleting booking:', err);
           this.errorMessage = 'Failed to delete booking.';
+          this.notificationService.showNotification({
+            type: 'error',
+            title: 'Error',
+            message: 'Failed to delete booking!'
+          });
         }
       });
     }

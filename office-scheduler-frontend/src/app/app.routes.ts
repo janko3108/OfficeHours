@@ -4,11 +4,14 @@ import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.compo
 import { StudentDashboardComponent } from './student-dashboard/student-dashboard.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
+import { AuthGuard } from './guard/auth.guard';
+import { CompleteProfileComponent } from './complete-profile/complete-profile.component';
 
 export const routes: Routes = [
   { path: 'home', component: HomeComponent },
-  { path: 'admin-dashboard', component: AdminDashboardComponent },
-  { path: 'dashboard', component: StudentDashboardComponent },
+  { path: 'admin-dashboard', component: AdminDashboardComponent, canActivate: [AuthGuard] },
+  { path: 'complete-profile', component: CompleteProfileComponent },
+  { path: 'dashboard', component: StudentDashboardComponent, canActivate: [AuthGuard] },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: '**', redirectTo: 'home' }

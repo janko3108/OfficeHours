@@ -4,12 +4,21 @@
       <a routerLink="/home">Office Scheduler</a>
     </div>
     <nav class="nav-links">
-      <!-- If logged in, show Dashboard and Logout links -->
       <ng-container *ngIf="currentUser; else loggedOut">
-        <a routerLink="{{ currentUser.isAdmin ? '/admin-dashboard' : '/dashboard' }}">Dashboard</a>
+        <ng-container *ngIf="currentUser.two_factor_completed; else incompleteProfile">
+          <ng-container *ngIf="currentUser.isAdmin; else studentOnly">
+            <a routerLink="/dashboard">Dashboard</a>
+            <a routerLink="/admin-dashboard">Admin Dashboard</a>
+          </ng-container>
+          <ng-template #studentOnly>
+            <a routerLink="/dashboard">Dashboard</a>
+          </ng-template>
+        </ng-container>
+        <ng-template #incompleteProfile>
+          <a routerLink="/complete-profile">Complete Profile</a>
+        </ng-template>
         <a href="javascript:void(0)" (click)="logout()">Logout</a>
       </ng-container>
-      <!-- If not logged in, show Login and Register links -->
       <ng-template #loggedOut>
         <a href="http://localhost:8000/login/">Login</a>
         <a routerLink="/register">Register</a>
@@ -21,7 +30,18 @@
   </div>
   <div class="mobile-menu" [class.show]="menuOpen">
     <ng-container *ngIf="currentUser; else mobileLoggedOut">
-      <a routerLink="{{ currentUser.isAdmin ? '/admin-dashboard' : '/dashboard' }}" (click)="toggleMenu()">Dashboard</a>
+      <ng-container *ngIf="currentUser.two_factor_completed; else mobileIncomplete">
+        <ng-container *ngIf="currentUser.isAdmin; else mobileStudentOnly">
+          <a routerLink="/dashboard" (click)="toggleMenu()">Dashboard</a>
+          <a routerLink="/admin-dashboard" (click)="toggleMenu()">Admin Dashboard</a>
+        </ng-container>
+        <ng-template #mobileStudentOnly>
+          <a routerLink="/dashboard" (click)="toggleMenu()">Dashboard</a>
+        </ng-template>
+      </ng-container>
+      <ng-template #mobileIncomplete>
+        <a routerLink="/complete-profile" (click)="toggleMenu()">Complete Profile</a>
+      </ng-template>
       <a href="javascript:void(0)" (click)="logout(); toggleMenu()">Logout</a>
     </ng-container>
     <ng-template #mobileLoggedOut>

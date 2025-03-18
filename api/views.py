@@ -1,13 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
-from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from rest_framework import generics, permissions
-from rest_framework.authtoken.views import ObtainAuthToken
-from .serializers import UserRegistrationSerializer, OfficeHourSerializer
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from datetime import datetime, timedelta
 from .models import OfficeHour
@@ -16,71 +12,91 @@ from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
 import json
 
+# Import the default SetupCompleteView from two_factor
+from two_factor.views import SetupCompleteView
+from api.models import UserProfile  # Make sure this import is correct
 
-# --- DRF API VIEWS ---
-class UserRegistrationAPIView(generics.CreateAPIView):
-    serializer_class = UserRegistrationSerializer
-    permission_classes = [permissions.AllowAny]
+# ----------------------------
+# CUSTOM COMPLETE VIEW
+# ----------------------------
 
-class OfficeHourBookingAPIView(generics.ListCreateAPIView):
-    serializer_class = OfficeHourSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        if self.request.user.is_staff:
-            return OfficeHour.objects.all()
-        return OfficeHour.objects.filter(student=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(student=self.request.user)
-
-class CustomObtainAuthToken(ObtainAuthToken):
-    def post(self, request, *args, **kwargs):
-        response = super(CustomObtainAuthToken, self).post(request, *args, **kwargs)
-        token = Token.objects.get(key=response.data['token'])
-        return Response({'token': token.key, 'user_id': token.user_id})
-
-# --- WEB/API VIEWS ---
+class CustomSetupCompleteView(SetupCompleteView):
+    def dispatch(self, request, *args, **kwargs):
+        print("CustomSetupCompleteView.dispatch called.")
+        if request.user.is_authenticated:
+            try:
+                # Update the profile record directly
+                updated_count = UserProfile.objects.filter(user=request.user).update(two_factor_completed=True)
+                print("UserProfile updated count:", updated_count)
+                # Refresh the user object from the database so that changes are visible.
+                request.user.refresh_from_db()
+                print("After update, two_factor_completed:", request.user.profile.two_factor_completed)
+            except Exception as e:
+                print("Error updating profile for user", request.user.username, ":", e)
+        else:
+            print("CustomSetupCompleteView: User is not authenticated!")
+        return HttpResponseRedirect("http://localhost:4200/home/")
+# ----------------------------
+# WEB/API VIEWS
+# ----------------------------
 
 @login_required
 def current_user(request):
     user = request.user
+    two_factor_completed = bool(getattr(user, 'profile', None) and user.profile.two_factor_completed)
     return JsonResponse({
         'id': user.id,
         'username': user.username,
         'email': user.email,
-        'isAdmin': user.is_staff
+        'isAdmin': user.is_staff,
+        'two_factor_completed': two_factor_completed
     })
 
 def home(request):
-    # This view won't be used for UI; Angular handles the landing page.
     if request.user.is_authenticated:
         if request.user.is_staff:
             return redirect('admin_dashboard')
         else:
             return redirect('student_dashboard')
-    return render(request, 'dashboard.html')  # You might remove this if not used.
+    return render(request, 'dashboard.html')
 
 def student_register(request):
     if request.method == 'POST':
+        print("student_register: POST received")
         username = request.POST.get('username')
         email = request.POST.get('email')
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
+        
+        if not (username and email and password and confirm_password):
+            return JsonResponse({'error': 'All fields are required.'}, status=400)
         if password != confirm_password:
-            context = {'error': 'Passwords do not match.'}
-            return render(request, 'register.html', context)
+            return JsonResponse({'error': 'Passwords do not match.'}, status=400)
         if User.objects.filter(username=username).exists():
-            context = {'error': 'Username already exists. Please choose another.'}
-            return render(request, 'register.html', context)
+            return JsonResponse({'error': 'Username already exists.'}, status=400)
+        
         try:
+            # Create the user normally. (Your signal should create a UserProfile with two_factor_completed=False.)
             user = User.objects.create_user(username=username, email=email, password=password)
             login(request, user)
-            return redirect(reverse('two_factor:setup') + '?next=/dashboard/')
-        except IntegrityError:
-            context = {'error': 'Username already exists. Please choose another.'}
-            return render(request, 'register.html', context)
-    return render(request, 'register.html')
+            request.session.save()
+            print("student_register: User created and logged in:", username)
+            # Redirect to two_factor setup; next parameter points to our custom complete URL.
+            redirect_url = "http://localhost:8000/account/two_factor/setup/?next=http://localhost:8000/custom-2fa-complete/"
+            print("student_register: Redirecting to 2FA setup with URL:", redirect_url)
+            return JsonResponse({'redirect': redirect_url})
+        except IntegrityError as e:
+            print("student_register: IntegrityError:", e)
+            return JsonResponse({'error': 'An error occurred. Please try again.'}, status=400)
+    
+    return redirect('home')
+
+def cancel_registration(request):
+    if request.user.is_authenticated and (not (getattr(request.user, 'profile', None) and request.user.profile.two_factor_completed)):
+        print("cancel_registration: Deleting incomplete user:", request.user.username)
+        request.user.delete()
+    return redirect("http://localhost:4200/home/")
 
 def student_login(request):
     if request.method == 'POST':
@@ -89,27 +105,28 @@ def student_login(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            if request.headers.get('Content-Type') == 'application/json':
-                return JsonResponse({'message': 'Login successful'})
+            if user.is_staff:
+                return redirect('admin_dashboard')
             else:
-                if user.is_staff:
-                    return redirect('admin_dashboard')
-                else:
-                    return redirect('student_dashboard')
+                return redirect('student_dashboard')
         else:
-            if request.headers.get('Content-Type') == 'application/json':
-                return JsonResponse({'error': 'Invalid credentials'}, status=400)
-            else:
-                return render(request, 'login.html', {'error': 'Invalid credentials'})
+            return render(request, 'login.html', {'error': 'Invalid credentials'})
     return render(request, 'login.html')
 
 def student_logout(request):
     logout(request)
-    request.session.flush()  # Ensure the session data is cleared
+    request.session.flush()
     return JsonResponse({'message': 'Logged out successfully'})
 
 @login_required
 def student_dashboard(request):
+    # If 2FA is not complete, return a JSON error so Angular can handle it.
+    if not (getattr(request.user, 'profile', None) and request.user.profile.two_factor_completed):
+        return JsonResponse({
+            'error': 'Two-factor authentication incomplete',
+            'complete_profile': False
+        }, status=403)
+    
     try:
         week_offset = int(request.GET.get('week', 0))
     except ValueError:
@@ -195,7 +212,7 @@ def admin_edit_booking(request, booking_id):
     context = {'booking': booking}
     return render(request, 'admin_edit_booking.html', context)
 
-@csrf_exempt  # Remove or use csrf_protect if you pass a valid CSRF token in the header
+@csrf_exempt
 @staff_member_required
 def admin_delete_booking(request, booking_id):
     try:
@@ -218,7 +235,7 @@ def get_csrf_token(request):
     token = get_token(request)
     return JsonResponse({'csrfToken': token})
 
-@csrf_exempt  # For testing; ideally, handle CSRF properly.
+@csrf_exempt
 def api_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -231,7 +248,7 @@ def api_login(request):
             return JsonResponse({'error': 'Invalid credentials'}, status=400)
     return JsonResponse({'error': 'Only POST allowed'}, status=405)
 
-@csrf_exempt  # Use proper CSRF protection in production!
+@csrf_exempt
 @staff_member_required
 def admin_edit_booking_api(request, booking_id):
     try:
@@ -263,3 +280,23 @@ def admin_edit_booking_api(request, booking_id):
 
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+@login_required
+def complete_2fa(request):
+    """
+    API endpoint that marks two-factor authentication as complete.
+    Optionally, you can add token verification here.
+    """
+    if request.method == 'POST':
+        try:
+            profile = request.user.profile
+            profile.two_factor_completed = True
+            profile.save()
+            request.user.refresh_from_db()
+            print(f"2FA marked complete for user: {request.user.username}")
+            return JsonResponse({'message': '2FA marked as complete.'})
+        except Exception as e:
+            print("Error updating 2FA status:", e)
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'POST required.'}, status=405)

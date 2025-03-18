@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface User {
@@ -9,6 +9,7 @@ export interface User {
   username: string;
   email: string;
   isAdmin?: boolean;
+  two_factor_completed?: boolean;
 }
 
 @Injectable({
@@ -19,7 +20,18 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
+
+  private getCookie(name: string): string | null {
+    const cookies = document.cookie ? document.cookie.split(';') : [];
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        return decodeURIComponent(cookie.substring(name.length + 1));
+      }
+    }
+    return null;
+  }
 
   getCsrfToken(): Observable<any> {
     const csrfUrl = this.baseUrl.replace('/api', '') + '/csrf/';
@@ -40,16 +52,22 @@ export class AuthService {
     );
   }
 
-  register(userData: any): Observable<User> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
-    const body = `username=${encodeURIComponent(userData.username)}&email=${encodeURIComponent(userData.email)}&password=${encodeURIComponent(userData.password)}&confirm_password=${encodeURIComponent(userData.confirm_password)}`;
-    return this.http.post<User>(`${this.baseUrl}/register/`, body, { headers, withCredentials: true }).pipe(
-      tap(response => {
-        console.log('Registration response:', response);
-        this.fetchCurrentUser().subscribe({
-          next: user => console.log("User after registration:", user),
-          error: err => console.error("Error fetching user after registration:", err)
+  register(userData: any): Observable<any> {
+    return this.getCsrfToken().pipe(
+      switchMap(() => {
+        const csrfToken = this.getCookie('csrftoken') || '';
+        const headers = new HttpHeaders({
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrfToken
         });
+        const body = `username=${encodeURIComponent(userData.username)}&email=${encodeURIComponent(userData.email)}&password=${encodeURIComponent(userData.password)}&confirm_password=${encodeURIComponent(userData.confirm_password)}`;
+        return this.http.post(`${this.baseUrl}/register/`, body, { headers, withCredentials: true });
+      }),
+      tap((response: any) => {
+        if (response.redirect) {
+          // Redirect the browser to the two_factor setup page on Django
+          window.location.href = response.redirect;
+        }
       })
     );
   }
@@ -71,12 +89,26 @@ export class AuthService {
     this.currentUserSubject.next(null);
   }
 
-  // New logout method: calls the logout endpoint and returns JSON.
   logout(): Observable<any> {
     return this.http.get<any>('http://localhost:8000/logout/', { withCredentials: true }).pipe(
       tap(response => {
         console.log('Logout response:', response);
         this.clearCurrentUser();
+      })
+    );
+  }
+
+  // New method to check authentication status
+  isAuthenticated(): boolean {
+    return !!this.currentUserSubject.getValue();
+  }
+
+  completeTwoFactor(token: string): Observable<any> {
+    // Optionally, include the token in the request if needed.
+    return this.http.post(`${this.baseUrl}/complete-2fa/`, { token }, { withCredentials: true }).pipe(
+      tap((response: any) => {
+        // Optionally, refresh the current user
+        this.fetchCurrentUser().subscribe();
       })
     );
   }

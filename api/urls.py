@@ -7,10 +7,10 @@ from api import views as api_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # Expose CSRF endpoint outside /api/ if needed.
+    # Expose CSRF endpoint.
     path('csrf/', api_views.get_csrf_token, name='get_csrf_token'),
     
-    # API endpoints under /api/ (including current-user)
+    # API endpoints under /api/
     path('api/', include([
         path('register/', api_views.student_register, name='register'),
         path('login/', api_views.api_login, name='api_login'),
@@ -21,17 +21,21 @@ urlpatterns = [
         path('manage/booking/delete/<int:booking_id>/', api_views.admin_delete_booking, name='admin_delete_booking'),
         path('current-user/', api_views.current_user, name='current_user'),
         path('manage/booking/edit/<int:booking_id>/', api_views.admin_edit_booking_api, name='admin_edit_booking_api'),
+        path('complete-2fa/', api_views.complete_2fa, name='complete_2fa'),
     ])),
-
-    # Expose logout at /logout/ (outside the /api/ prefix for simplicity)
+    
+    # Logout endpoint.
     path('logout/', api_views.student_logout, name='logout'),
+    
+    # CUSTOM 2FA COMPLETE VIEW:
+    path('custom-2fa-complete/', api_views.CustomSetupCompleteView.as_view(), name='custom_setup_complete'),
 
-    # Include two_factor URLs (for interactive login)
+    # Include two_factor URLs for all other two-factor functionality.
     path('', include((two_factor_urls_module.urlpatterns[0], two_factor_urls_module.urlpatterns[1]), namespace='two_factor')),
-
-    # Redirect /login/ to two_factor's login view
+    
+    # Redirect /login/ to two_factor's login view.
     path('login/', lambda request: redirect('two_factor:login'), name='login'),
-
-    # Catch-all redirect to Angular landing page
+    
+    # Catch-all redirect to Angular landing page.
     path('', lambda request: redirect('http://localhost:4200/home/')),
 ]

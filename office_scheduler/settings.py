@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework.authtoken',
-    'corsheaders',  # Added for Angular CORS support
+    'corsheaders',
     
     # 2FA / OTP apps
     'django_otp',
@@ -52,8 +52,8 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_totp',
     'two_factor',
     
-    # Your app (renamed from scheduler to api)
-    'api',
+    # Your app - use only the AppConfig
+    'api.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [
@@ -73,7 +73,7 @@ ROOT_URLCONF = 'office_scheduler.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'api' / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],  # now pointing to your global templates folder
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

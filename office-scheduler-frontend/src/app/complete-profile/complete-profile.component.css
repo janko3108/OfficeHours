@@ -1,0 +1,40 @@
+.complete-profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    background: #f4f7f6;
+    padding: 2rem;
+    text-align: center;
+  }
+  
+  .complete-profile h1 {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 1rem;
+  }
+  
+  .complete-profile p {
+    font-size: 1.2rem;
+    color: #666;
+    max-width: 600px;
+    margin-bottom: 2rem;
+  }
+  
+  .complete-profile button {
+    background: linear-gradient(45deg, #0d47a1, #1976d2);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+  
+  .complete-profile button:hover {
+    background: linear-gradient(45deg, #0a3e85, #1565c0);
+    transform: scale(1.05);
+  }
+  

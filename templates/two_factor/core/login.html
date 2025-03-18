@@ -1,0 +1,103 @@
+{% extends "two_factor/_base_focus.html" %}
+{% load i18n %}
+{% block extra_media %}
+<style>
+  /* Container styling */
+  .login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  .login-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  /* Form styling */
+  .form-group {
+    margin-bottom: 15px;
+  }
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #555;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  .error {
+    color: #f44336;
+    font-size: 0.9rem;
+    margin-top: 5px;
+  }
+  /* Button styling */
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+  }
+  .btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    text-align: center;
+    font-weight: 600;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+  }
+  .btn-back {
+    background-color: #f44336;
+    color: #fff;
+    border: none;
+  }
+  .btn-submit {
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+  }
+  .btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="login-container">
+  <h2>Login</h2>
+  <form method="post">
+    {% csrf_token %}
+    {# Include wizard management form for the multi‑step wizard #}
+    {{ wizard.management_form }}
+    
+    {% if wizard.form.non_field_errors %}
+      <div class="error">{{ wizard.form.non_field_errors }}</div>
+    {% endif %}
+    
+    {% for field in wizard.form %}
+      <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <div class="error">{{ field.errors }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+    
+    <div class="form-actions">
+      <a href="http://localhost:4200/home/" class="btn btn-back">{% trans "Back" %}</a>
+      <button type="submit" class="btn btn-submit">{% trans "Next" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
