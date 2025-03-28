@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService, User } from '../services/auth.service';
 import { Observable, of } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
+import { filter, map, tap, catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -15,17 +15,18 @@ export class AuthGuard implements CanActivate {
     state: RouterStateSnapshot
   ): Observable<boolean> {
     return this.authService.currentUser$.pipe(
-      map((user: User | null) => {
-        // Allow access only if the user is logged in and two_factor_completed is true.
-        return !!(user && user.two_factor_completed);
-      }),
-      tap((allowed) => {
+      // 🛑 Skip null values — wait until user is loaded
+      filter((user: User | null): user is User => user !== null),
+      // ✅ Check if 2FA is complete
+      map(user => !!user.two_factor_completed),
+      // 🚨 If not allowed, redirect
+      tap(allowed => {
         if (!allowed) {
-          // If the user is not fully registered (2FA not complete), redirect to the complete-profile page.
           this.router.navigate(['/complete-profile']);
         }
       }),
-      catchError((error) => {
+      // 🔁 Handle edge cases
+      catchError(() => {
         this.router.navigate(['/login']);
         return of(false);
       })
