@@ -15,17 +15,13 @@ export class AuthGuard implements CanActivate {
     state: RouterStateSnapshot
   ): Observable<boolean> {
     return this.authService.currentUser$.pipe(
-      // 🛑 Skip null values — wait until user is loaded
       filter((user: User | null): user is User => user !== null),
-      // ✅ Check if 2FA is complete
       map(user => !!user.two_factor_completed),
-      // 🚨 If not allowed, redirect
       tap(allowed => {
         if (!allowed) {
           this.router.navigate(['/complete-profile']);
         }
       }),
-      // 🔁 Handle edge cases
       catchError(() => {
         this.router.navigate(['/login']);
         return of(false);

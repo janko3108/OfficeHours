@@ -16,7 +16,6 @@ export class NotificationService {
     const currentNotifications = this.notificationsSubject.getValue();
     this.notificationsSubject.next([...currentNotifications, newNotification]);
   
-    // After duration, mark the notification as not visible.
     setTimeout(() => {
       this.hideNotification(newNotification.id);
     }, duration);

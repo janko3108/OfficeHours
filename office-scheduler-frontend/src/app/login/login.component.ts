@@ -16,24 +16,20 @@ export class LoginComponent {
   login(): void {
     this.authService.login(this.credentials).subscribe({
       next: () => {
-        // After successful login, fetch current user data
         this.authService.fetchCurrentUser().subscribe({
           next: (user) => {
-            console.log("Logged in user:", user);
             if (user && user.isAdmin) {
               this.router.navigate(['/admin-dashboard']);
             } else {
               this.router.navigate(['/dashboard']);
             }
           },
-          error: (err) => {
-            console.error("Error fetching user:", err);
+          error: () => {
             this.errorMessage = 'Could not retrieve user information after login.';
           }
         });
       },
-      error: (err) => {
-        console.error("Login failed:", err);
+      error: () => {
         this.errorMessage = 'Login failed. Please check your credentials.';
       }
     });

@@ -15,21 +15,13 @@ import { NotificationsComponent } from './notification.component';
     <app-footer></app-footer>
   `,
   styleUrls: ['./app.component.css'],
-  imports: [RouterOutlet, NotificationsComponent , HeaderComponent, FooterComponent] // Add FooterComponent here
+  imports: [RouterOutlet, NotificationsComponent, HeaderComponent, FooterComponent]
 })
 export class AppComponent implements OnInit {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   ngOnInit(): void {
-    // Get the CSRF token to ensure the cookie is set
-    this.authService.getCsrfToken().subscribe({
-      next: (data) => console.log("CSRF token set:", data),
-      error: (err) => console.error("Error fetching CSRF token:", err)
-    });
-    // Fetch current user data to update auth state
-    this.authService.fetchCurrentUser().subscribe({
-      next: (user) => console.log("Fetched current user in AppComponent:", user),
-      error: (err) => console.error("Error fetching current user:", err)
-    });
+    this.authService.getCsrfToken().subscribe();
+    this.authService.fetchCurrentUser().subscribe();
   }
 }

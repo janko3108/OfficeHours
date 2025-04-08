@@ -14,14 +14,12 @@ export interface DashboardData {
   providedIn: 'root'
 })
 export class OfficeHourService {
-  // Base URL for API endpoints (e.g., 'http://localhost:8000/api')
   private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
   // --- CSRF Handling ---
   getCsrfToken(): Observable<any> {
-    // CSRF endpoint is assumed to be outside the /api/ prefix.
     const csrfUrl = this.baseUrl.replace('/api', '') + '/csrf/';
     return this.http.get<any>(csrfUrl, { withCredentials: true });
   }

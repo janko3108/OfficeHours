@@ -11,6 +11,8 @@ from django.utils import timezone
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.utils import timezone
+
 
 # Import the default SetupCompleteView from two_factor
 from two_factor.views import SetupCompleteView
@@ -171,7 +173,8 @@ def book_office_hour(request):
     if request.method == 'POST':
         booking_time_str = request.POST.get('booking_time')
         try:
-            booking_time = datetime.strptime(booking_time_str, "%Y-%m-%dT%H:%M")
+            naive_booking_time = datetime.strptime(booking_time_str, "%Y-%m-%dT%H:%M")
+            booking_time = timezone.make_aware(naive_booking_time, timezone.get_current_timezone())
         except ValueError:
             return render(request, 'book_office_hour.html', {'error': 'Invalid booking time format.'})
         if OfficeHour.objects.filter(booking_time=booking_time).exists():

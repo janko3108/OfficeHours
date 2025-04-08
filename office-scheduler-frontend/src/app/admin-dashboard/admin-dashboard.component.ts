@@ -16,9 +16,8 @@ export class AdminDashboardComponent implements OnInit {
   bookings: any[] = [];
   errorMessage: string = '';
   loading: boolean = true;
-  currentUser: User | null = null;  // holds logged-in user's info
+  currentUser: User | null = null;
 
-  // Properties for modal editing
   editingBooking: any = null;
   editingBookingTime: string = '';
 
@@ -40,8 +39,7 @@ export class AdminDashboardComponent implements OnInit {
         this.bookings = data.bookings;
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error(err);
+      error: () => {
         this.errorMessage = 'Failed to load admin dashboard data';
         this.loading = false;
       }
@@ -53,18 +51,21 @@ export class AdminDashboardComponent implements OnInit {
       next: (user: User) => {
         this.currentUser = user;
       },
-      error: (err: any) => {
-        console.error('Failed to fetch current user:', err);
+      error: () => {
       }
     });
   }
 
   openEditModal(event: Event, booking: any): void {
     event.preventDefault();
-    console.log("openEditModal triggered for booking:", booking);
     this.editingBooking = booking;
-    // Ensure booking.booking_time is a valid ISO string
-    this.editingBookingTime = booking.booking_time.slice(0, 16);
+    const utcDate = new Date(booking.booking_time); 
+
+    const localISO = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+
+    this.editingBookingTime = localISO;
   }
 
   closeEditModal(): void {
@@ -73,10 +74,9 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   updateBooking(): void {
-    if (!this.editingBooking) { return; }
+    if (!this.editingBooking) return;
     this.officeHourService.updateBooking(this.editingBooking.id, this.editingBookingTime).subscribe({
-      next: (data: any) => {
-        console.log('Booking updated:', data);
+      next: () => {
         this.notificationService.showNotification({
           type: 'info',
           title: 'Update',
@@ -85,8 +85,7 @@ export class AdminDashboardComponent implements OnInit {
         this.fetchBookings();
         this.closeEditModal();
       },
-      error: (err: any) => {
-        console.error(err);
+      error: () => {
         this.errorMessage = 'Failed to update booking.';
         this.notificationService.showNotification({
           type: 'error',
@@ -100,8 +99,7 @@ export class AdminDashboardComponent implements OnInit {
   deleteBooking(bookingId: number): void {
     if (confirm('Are you sure you want to delete this booking?')) {
       this.officeHourService.deleteBooking(bookingId).subscribe({
-        next: (res: any) => {
-          console.log('Booking deleted:', res);
+        next: () => {
           this.notificationService.showNotification({
             type: 'error',
             title: 'Deleted',
@@ -109,8 +107,7 @@ export class AdminDashboardComponent implements OnInit {
           });
           this.fetchBookings();
         },
-        error: (err: any) => {
-          console.error('Error deleting booking:', err);
+        error: () => {
           this.errorMessage = 'Failed to delete booking.';
           this.notificationService.showNotification({
             type: 'error',

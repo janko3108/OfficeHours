@@ -23,14 +23,11 @@ export class RegisterComponent {
       return;
     }
     this.authService.register(this.userData).subscribe({
-      next: (user: User) => {
-        console.log('Registration successful:', user);
-        // Redirect to login page after successful registration
+      next: (_user: User) => {
         this.router.navigate(['/login']);
       },
-      error: (err: any) => {
+      error: (_err: any) => {
         this.errorMessage = 'Registration failed. Please try again.';
-        console.error('Registration error:', err);
       }
     });
   }

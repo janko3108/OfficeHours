@@ -17,9 +17,7 @@ export class HeaderComponent implements OnInit {
   constructor(private authService: AuthService) {}
 
   ngOnInit(): void {
-    // Subscribe to current user changes and log the value
     this.authService.currentUser$.subscribe(user => {
-      console.log("Current user in header:", user);
       this.currentUser = user;
     });
   }
@@ -28,10 +26,8 @@ export class HeaderComponent implements OnInit {
     this.menuOpen = !this.menuOpen;
   }
 
-  // Trigger logout and redirect (if desired, you can call this method from the template)
   logout(): void {
     this.authService.logout().subscribe(() => {
-      // Optionally, you can also reload the page or use router navigation.
       window.location.href = 'http://localhost:4200/home/';
     });
   }

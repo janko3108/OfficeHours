@@ -161,3 +161,6 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_COOKIE_SECURE = False
+
+USE_TZ = True
+TIME_ZONE = 'Europe/Zagreb'  # or your correct local time zone

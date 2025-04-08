@@ -16,11 +16,11 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthService {
-  private baseUrl = environment.apiUrl; // e.g., 'http://localhost:8000/api'
+  private baseUrl = environment.apiUrl;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   private getCookie(name: string): string | null {
     const cookies = document.cookie ? document.cookie.split(';') : [];
@@ -42,12 +42,8 @@ export class AuthService {
     const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
     const body = `username=${encodeURIComponent(credentials.username)}&password=${encodeURIComponent(credentials.password)}`;
     return this.http.post<any>(`${this.baseUrl}/login/`, body, { headers, withCredentials: true }).pipe(
-      tap(response => {
-        console.log('Login response:', response);
-        this.fetchCurrentUser().subscribe({
-          next: user => console.log("User after login:", user),
-          error: err => console.error("Error fetching user after login:", err)
-        });
+      tap(() => {
+        this.fetchCurrentUser().subscribe();
       })
     );
   }
@@ -65,7 +61,6 @@ export class AuthService {
       }),
       tap((response: any) => {
         if (response.redirect) {
-          // Redirect the browser to the two_factor setup page on Django
           window.location.href = response.redirect;
         }
       })
@@ -75,7 +70,6 @@ export class AuthService {
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/current-user/`, { withCredentials: true }).pipe(
       tap(user => {
-        console.log('Fetched current user:', user);
         this.currentUserSubject.next(user);
       })
     );
@@ -91,23 +85,19 @@ export class AuthService {
 
   logout(): Observable<any> {
     return this.http.get<any>('http://localhost:8000/logout/', { withCredentials: true }).pipe(
-      tap(response => {
-        console.log('Logout response:', response);
+      tap(() => {
         this.clearCurrentUser();
       })
     );
   }
 
-  // New method to check authentication status
   isAuthenticated(): boolean {
     return !!this.currentUserSubject.getValue();
   }
 
   completeTwoFactor(token: string): Observable<any> {
-    // Optionally, include the token in the request if needed.
     return this.http.post(`${this.baseUrl}/complete-2fa/`, { token }, { withCredentials: true }).pipe(
-      tap((response: any) => {
-        // Optionally, refresh the current user
+      tap(() => {
         this.fetchCurrentUser().subscribe();
       })
     );

@@ -71,7 +71,6 @@ export class NotificationsComponent implements OnInit {
   }
 
   onAnimationDone(event: any, notification: Notification): void {
-    // If the state transitioned to "hidden", remove the notification from the list.
     if (event.toState === 'hidden') {
       this.notificationService.removeNotification(notification.id);
     }
