@@ -1,19 +1,58 @@
 <!-- Hero Section -->
 <section class="hero-section">
-    <div class="hero-content">
-      <h1 class="hero-title">Welcome to Office Scheduler</h1>
-      <p class="hero-subtitle">
-        Manage your office hours and appointments effortlessly.
-      </p>
-      <button class="btn-explore" (click)="explore()">Explore Now</button>
+  <div class="hero-content">
+    <h1 class="hero-title">Book Office Hours in Seconds</h1>
+    <p class="hero-subtitle">Your time matters. Let’s make it count.</p>
+    <button class="btn-explore" (click)="scrollTo('features')">Get Started</button>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" id="features">
+  <div class="feature-card" *ngFor="let feature of features">
+    <i [class]="feature.iconClass"></i>
+    <h3>{{ feature.title }}</h3>
+    <p>{{ feature.description }}</p>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works">
+  <h2>How It Works</h2>
+  <div class="steps">
+    <div class="step">
+      <i class="fas fa-user-plus"></i>
+      <h4>1. Register</h4>
+      <p>Create your free account and set up 2FA for security.</p>
     </div>
-  </section>
-  
-  <!-- Features Section -->
-  <section class="features-section">
-    <div class="feature-card" *ngFor="let feature of features">
-      <h3>{{ feature.title }}</h3>
-      <p>{{ feature.description }}</p>
+    <div class="step">
+      <i class="fas fa-calendar-alt"></i>
+      <h4>2. Book</h4>
+      <p>Choose a time that works and reserve your office hour.</p>
     </div>
-  </section>
-  
+    <div class="step">
+      <i class="fas fa-check-circle"></i>
+      <h4>3. Meet</h4>
+      <p>Join your meeting and get help, feedback, or answers.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonials">
+  <h2>What Students Say</h2>
+  <div class="testimonial-list">
+    <div class="testimonial-card" *ngFor="let t of testimonials">
+      <img [src]="t.avatar" alt="{{ t.name }} avatar" class="avatar" />
+      <p class="quote">“{{ t.message }}”</p>
+      <h4 class="author">— {{ t.name }}</h4>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta">
+  <h2>Ready to Save Time?</h2>
+  <p>Register today and never miss an office hour again.</p>
+  <button class="btn-explore secondary" routerLink="/register">Create Account</button>
+</section>

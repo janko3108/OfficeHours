@@ -4,14 +4,9 @@ from django.shortcuts import redirect
 from api import views as api_views
 from two_factor import urls as two_factor_urls_module
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    
+urlpatterns = [    
     # Include two_factor URLs (if used)
-    path(
-        '', 
-        include((two_factor_urls_module.urlpatterns[0], two_factor_urls_module.urlpatterns[1]), namespace='two_factor')
-    ),
+
     
     path('accounts/login/', lambda request: redirect('two_factor:login'), name='accounts_login'),
 

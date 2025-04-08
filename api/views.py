@@ -77,12 +77,10 @@ def student_register(request):
             return JsonResponse({'error': 'Username already exists.'}, status=400)
         
         try:
-            # Create the user normally. (Your signal should create a UserProfile with two_factor_completed=False.)
             user = User.objects.create_user(username=username, email=email, password=password)
             login(request, user)
             request.session.save()
             print("student_register: User created and logged in:", username)
-            # Redirect to two_factor setup; next parameter points to our custom complete URL.
             redirect_url = "http://localhost:8000/account/two_factor/setup/?next=http://localhost:8000/custom-2fa-complete/"
             print("student_register: Redirecting to 2FA setup with URL:", redirect_url)
             return JsonResponse({'redirect': redirect_url})
